@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Emergency System</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#dc2626">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 15px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .emergency-status {
+            background: #dc2626;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+            display: none;
+        }
+        
+        .emergency-status.active {
+            display: block;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .nav-tabs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .tab-btn {
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+        
+        .card.active {
+            display: block;
+        }
+        
+        .chat-container {
+            height: 400px;
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            background: white;
+            overflow: hidden;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #f9fafb;
+            scroll-behavior: smooth;
+        }
+        
+        .message {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .user-message {
+            flex-direction: row-reverse;
+        }
+
+        .message-content {
+            padding: 10px 12px;
+            border-radius: 12px;
+            max-width: 75%;
+            line-height: 1.4;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            font-size: 14px;
+        }
+
+        .user-message .message-content {
+            background-color: #3b82f6;
+            color: white;
+            margin-right: 10px;
+        }
+
+        .bot-message .message-content {
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            margin-left: 10px;
+        }
+
+        .chat-input-container {
+            display: flex;
+            padding: 10px;
+            background-color: white;
+            border-top: 1px solid #e5e7eb;
+            gap: 8px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            outline: none;
+            font-size: 14px;
+            background-color: #f9fafb;
+            resize: none;
+            max-height: 100px;
+        }
+
+        .chat-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            background-color: white;
+        }
+        
+        .send-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .send-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        
+        .status-safe { background: #10b981; }
+        .status-alert { background: #f59e0b; }
+        .status-emergency { background: #dc2626; }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            padding: 15px;
+            border-radius: 10px;
+            background: #f0f9ff;
+            border-left: 4px solid #0ea5e9;
+        }
+
+        .info-box.success {
+            background: #f0fdf4;
+            border-left-color: #22c55e;
+        }
+
+        .info-box.warning {
+            background: #fffbeb;
+            border-left-color: #f59e0b;
+        }
+
+        .info-box.danger {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+        }
+
+        .location-display {
+            background: #f8fafc;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .database-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 11px;
+            z-index: 1000;
+        }
+
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            margin-left: 10px;
+        }
+
+        .typing-indicator span {
+            height: 6px;
+            width: 6px;
+            background-color: #6b7280;
+            border-radius: 50%;
+            margin: 0 1px;
+            animation: typing 1.4s infinite ease-in-out both;
+        }
+
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 640px) {
+            .container {
+                padding: 8px;
+            }
+            
+            .nav-tabs {
+                grid-template-columns: repeat(2, 1fr);
+                font-size: 11px;
+            }
+            
+            .chat-container {
+                height: 300px;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="database-status" id="dbStatus">Offline DB: Ready</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🏫 Emergency Response System</h1>
+            <p>Real-time student tracking & emergency management</p>
+            <div class="emergency-status" id="emergencyStatus">
+                <span class="status-indicator status-emergency"></span>
+                <span id="emergencyText">System Ready - No Active Emergency</span>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="showTab('chat')">🤖 AI Chat</button>
+            <button class="tab-btn" onclick="showTab('student')">👨‍🎓 Students</button>
+            <button class="tab-btn" onclick="showTab('location')">📍 Locations</button>
+            <button class="tab-btn" onclick="showTab('procedures')">📋 Procedures</button>
+            <button class="tab-btn" onclick="showTab('system')">⚙️ System</button>
+        </div>
+
+        <!-- AI Chat Tab -->
+        <div class="card active" id="chatTab">
+            <h3>🤖 Emergency AI Assistant</h3>
+            <p style="color: #666; margin-bottom: 10px;">Get instant guidance for emergency procedures and student safety.</p>
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chatMessages"></div>
+                <div class="chat-input-container">
+                    <textarea class="chat-input" id="chatInput" placeholder="Ask about emergency procedures, student status, or what to do..." rows="1"></textarea>
+                    <button class="send-btn" id="sendButton">Send</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Status Tab -->
+        <div class="card" id="studentTab">
+            <h3>👨‍🎓 Student Status</h3>
+            <div class="info-grid" id="studentList">
+                <!-- Student cards will be populated here -->
+            </div>
+        </div>
+
+        <!-- Location Tracking Tab -->
+        <div class="card" id="locationTab">
+            <h3>📍 Location Tracking</h3>
+            <div class="info-box">
+                <h4>Current Scanner Location</h4>
+                <div class="location-display" id="currentLocation">
+                    Lat: --.----- | Lng: --.----- | Accuracy: -- meters
+                </div>
+            </div>
+            <div class="info-grid" id="locationHistory">
+                <!-- Location history will be populated here -->
+            </div>
+        </div>
+
+        <!-- Emergency Procedures Tab -->
+        <div class="card" id="proceduresTab">
+            <h3>📋 Emergency Procedures</h3>
+            <div class="info-grid">
+                <div class="info-box danger">
+                    <h4>🔥 Fire Emergency</h4>
+                    <ul style="margin: 5px 0; padding-left: 15px; font-size: 13px;">
+                        <li>Evacuate immediately to assembly areas</li>
+                        <li>Check attendance at evacuation points</li>
+                        <li>Send automated parent notifications</li>
+                    </ul>
+                </div>
+                <div class="info-box warning">
+                    <h4>🌪️ Earthquake</h4>
+                    <ul style="margin: 5px 0; padding-left: 15px; font-size: 13px;">
+                        <li>Drop, cover, and hold protocol</li>
+                        <li>Move to safe zones after shaking stops</li>
+                        <li>Account for all students</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status Tab -->
+        <div class="card" id="systemTab">
+            <h3>⚙️ System Status</h3>
+            <div class="info-grid">
+                <div class="info-box success">
+                    <h4>📱 GSM Module</h4>
+                    <p>Status: <span id="gsmStatus">Connected</span></p>
+                    <p>Signal: <span id="signalStrength">Strong</span></p>
+                </div>
+                <div class="info-box">
+                    <h4>🗃️ Database</h4>
+                    <p>Students: <span id="studentCount">0</span></p>
+                    <p>Last Sync: <span id="lastSync">Never</span></p>
+                </div>
+                <div class="info-box">
+                    <h4>📍 GPS Module</h4>
+                    <p>Status: <span id="gpsStatus">Searching...</span></p>
+                    <p>Satellites: <span id="satelliteCount">0</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System Configuration
+        const API_KEY = 'AIzaSyCvGFjPz8bI8tv3CDYndMTEMK9vuQfIYF4';
+        const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
+
+        // Offline Database
+        let offlineDB = {
+            students: [
+                {id: "123456", name: "John Doe", section: "Grade 10-A", parentNumber: "09123456789", status: "safe", location: null, lastSeen: null},
+                {id: "234567", name: "Jane Smith", section: "Grade 11-B", parentNumber: "09876543210", status: "safe", location: null, lastSeen: null},
+                {id: "345678", name: "Alice Brown", section: "Grade 9-C", parentNumber: "09111213141", status: "safe", location: null, lastSeen: null}
+            ],
+            locations: [],
+            emergencies: []
+        };
+
+        // System State
+        let currentLocation = {lat: null, lng: null, accuracy: null};
+        let systemStatus = {
+            gsm: true,
+            gps: false,
+            emergency: false
+        };
+
+        // DOM Elements
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+
+        // Initialize System
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSystem();
+            startLocationTracking();
+            updateSystemStatus();
+            populateStudentList();
+            
+            // Add welcome message
+            addMessage("🚨 Emergency Response System Online!\n\nI can help you with:\n• Emergency procedures and protocols\n• Student location and status updates\n• Parent notification procedures\n• Real-time guidance during emergencies\n\nWhat do you need assistance with?", false);
+        });
+
+        function initializeSystem() {
+            document.getElementById('studentCount').textContent = offlineDB.students.length;
+            document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
+            updateDatabaseStatus();
+        }
+
+        function updateDatabaseStatus() {
+            const status = document.getElementById('dbStatus');
+            status.textContent = `Offline DB: ${offlineDB.students.length} students`;
+            status.style.background = offlineDB.students.length > 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)';
+        }
+
+        // Location Tracking
+        function startLocationTracking() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    position => {
+                        currentLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            accuracy: Math.round(position.coords.accuracy)
+                        };
+                        updateLocationDisplay();
+                        document.getElementById('gpsStatus').textContent = 'Active';
+                        systemStatus.gps = true;
+                    },
+                    error => {
+                        console.error('GPS Error:', error);
+                        document.getElementById('gpsStatus').textContent = 'Error';
+                        systemStatus.gps = false;
+                    },
+                    {enableHighAccuracy: true, timeout: 10000, maximumAge: 60000}
+                );
+            }
+        }
+
+        function updateLocationDisplay() {
+            const display = document.getElementById('currentLocation');
+            if (currentLocation.lat && currentLocation.lng) {
+                display.textContent = `Lat: ${currentLocation.lat.toFixed(6)} | Lng: ${currentLocation.lng.toFixed(6)} | Accuracy: ${currentLocation.accuracy}m`;
+            }
+        }
+
+        // Student Management
+        function populateStudentList() {
+            const container = document.getElementById('studentList');
+            container.innerHTML = '';
+            
+            offlineDB.students.forEach(student => {
+                const card = document.createElement('div');
+                card.className = `info-box ${student.status === 'safe' ? 'success' : student.status === 'missing' ? 'danger' : ''}`;
+                card.innerHTML = `
+                    <h4><span class="status-indicator status-${student.status}"></span>${student.name}</h4>
+                    <p><strong>ID:</strong> ${student.id}</p>
+                    <p><strong>Section:</strong> ${student.section}</p>
+                    <p><strong>Status:</strong> ${student.status.toUpperCase()}</p>
+                    ${student.location ? `<p><strong>Location:</strong> ${student.location}</p>` : ''}
+                    ${student.lastSeen ? `<p><strong>Last Seen:</strong> ${student.lastSeen}</p>` : ''}
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Simulated QR Scan Processing
+        function processQRScan(qrData) {
+            const student = offlineDB.students.find(s => s.id === qrData);
+            
+            if (student) {
+                student.location = `${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}`;
+                student.lastSeen = new Date().toLocaleTimeString();
+                student.status = 'safe';
+                
+                // Add to location history
+                offlineDB.locations.push({
+                    studentId: student.id,
+                    studentName: student.name,
+                    location: student.location,
+                    timestamp: new Date().toISOString(),
+                    emergencyType: systemStatus.emergency ? 'active' : 'routine'
+                });
+                
+                populateStudentList();
+                updateLocationHistory();
+                
+                // Simulate sending SMS (in actual implementation, this would trigger ESP32)
+                console.log(`SMS would be sent to ${student.parentNumber}: ${student.name} is safe at location ${student.location}`);
+                
+                return `✅ Student ${student.name} scanned successfully!\nLocation recorded: ${student.location}\nParent notification sent.`;
+            }
+            
+            return `❌ Student not found in database. QR Code: ${qrData}`;
+        }
+
+        function updateLocationHistory() {
+            const container = document.getElementById('locationHistory');
+            container.innerHTML = '';
+            
+            offlineDB.locations.slice(-10).reverse().forEach(loc => {
+                const card = document.createElement('div');
+                card.className = 'info-box';
+                card.innerHTML = `
+                    <h4>📍 ${loc.studentName}</h4>
+                    <p><strong>Location:</strong> ${loc.location}</p>
+                    <p><strong>Time:</strong> ${new Date(loc.timestamp).toLocaleString()}</p>
+                    <p><strong>Type:</strong> ${loc.emergencyType}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // AI Chat System
+        async function generateResponse(prompt) {
+            const emergencyContext = `You are an AI assistant for a school emergency response system with GPS tracking and QR code student identification. 
+
+Current system status:
+- Students in database: ${offlineDB.students.length}
+- GPS status: ${systemStatus.gps ? 'Active' : 'Inactive'}
+- GSM module: ${systemStatus.gsm ? 'Connected' : 'Disconnected'}
+- Emergency mode: ${systemStatus.emergency ? 'ACTIVE' : 'Normal'}
+
+Recent student scans: ${offlineDB.locations.slice(-3).map(l => `${l.studentName} at ${l.location}`).join(', ')}
+
+Provide helpful, professional responses about:
+- Emergency procedures and safety protocols
+- Student tracking and location services
+- Parent communication procedures
+- System troubleshooting
+- Real-time emergency guidance
+
+User question: ${prompt}`;
+
+            try {
+                const response = await fetch(`${API_URL}?key=${API_KEY}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [{text: emergencyContext}]
+                        }]
+                    })
+                });
+
+                if (!response.ok) throw new Error('API request failed');
+                
+                const data = await response.json();
+                return data.candidates[0].content.parts[0].text;
+            } catch (error) {
+                return 'I apologize, but I\'m having connection issues. For immediate assistance, contact the emergency hotline or use the offline procedures guide.';
+            }
+        }
+
+        function addMessage(message, isUser) {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', isUser ? 'user-message' : 'bot-message');
+            
+            const messageContent = document.createElement('div');
+            messageContent.classList.add('message-content');
+            messageContent.innerHTML = message.replace(/\n/g, '<br>');
+            
+            messageElement.appendChild(messageContent);
+            chatMessages.appendChild(messageElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const typingElement = document.createElement('div');
+            typingElement.classList.add('message', 'bot-message', 'typing-message');
+            
+            const typingIndicator = document.createElement('div');
+            typingIndicator.classList.add('typing-indicator');
+            for (let i = 0; i < 3; i++) {
+                typingIndicator.appendChild(document.createElement('span'));
+            }
+            
+            typingElement.appendChild(typingIndicator);
+            chatMessages.appendChild(typingElement);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            return typingElement;
+        }
+
+        async function handleUserInput() {
+            const userMessage = chatInput.value.trim();
+            if (!userMessage) return;
+            
+            addMessage(userMessage, true);
+            chatInput.value = '';
+            sendButton.disabled = true;
+            
+            const typingIndicator = showTypingIndicator();
+            
+            try {
+                const response = await generateResponse(userMessage);
+                typingIndicator.remove();
+                addMessage(response, false);
+            } catch (error) {
+                typingIndicator.remove();
+                addMessage('System error. Please try again or contact technical support.', false);
+            } finally {
+                sendButton.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        // Event Listeners
+        sendButton.addEventListener('click', handleUserInput);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleUserInput();
+            }
+        });
+
+        // Tab Navigation
+        function showTab(tabName) {
+            document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function updateSystemStatus() {
+            document.getElementById('gsmStatus').textContent = systemStatus.gsm ? 'Connected' : 'Disconnected';
+            document.getElementById('signalStrength').textContent = systemStatus.gsm ? 'Strong' : 'No Signal';
+            document.getElementById('satelliteCount').textContent = systemStatus.gps ? '8' : '0';
+        }
+
+        // Simulate emergency activation (for testing)
+        function activateEmergency(type) {
+            systemStatus.emergency = true;
+            document.getElementById('emergencyStatus').classList.add('active');
+            document.getElementById('emergencyText').textContent = `${type.toUpperCase()} EMERGENCY ACTIVE`;
+        }
+
+        // Simulate QR scan for testing (remove in production)
+        setTimeout(() => {
+            if (confirm('Simulate QR scan for testing? (John Doe - 123456)')) {
+                const result = processQRScan('123456');
+                addMessage(`System Update: ${result}`, false);
+            }
+        }, 5000);
+    </script>
+</body>
+</html>
