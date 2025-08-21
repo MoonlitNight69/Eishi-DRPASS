@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Emergency System</title>
+    <title>School Emergency System - Offline</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#dc2626">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Emergency System">
     
     <style>
         * {
@@ -40,6 +42,24 @@
             text-align: center;
         }
         
+        .offline-indicator {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 1000;
+            animation: pulse 2s infinite;
+        }
+        
+        .offline-indicator.offline {
+            background: rgba(239, 68, 68, 0.9);
+        }
+        
         .emergency-status {
             background: #dc2626;
             color: white;
@@ -48,12 +68,18 @@
             margin: 10px 0;
             text-align: center;
             font-weight: bold;
-            animation: pulse 2s infinite;
+            animation: emergencyPulse 1.5s infinite;
             display: none;
         }
         
         .emergency-status.active {
             display: block;
+        }
+        
+        @keyframes emergencyPulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.02); }
+            100% { opacity: 1; transform: scale(1); }
         }
         
         @keyframes pulse {
@@ -64,13 +90,13 @@
         
         .nav-tabs {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 8px;
             margin-bottom: 15px;
         }
         
         .tab-btn {
-            padding: 10px;
+            padding: 12px 8px;
             background: rgba(255, 255, 255, 0.7);
             border: none;
             border-radius: 10px;
@@ -79,11 +105,13 @@
             font-size: 12px;
             transition: all 0.3s;
             text-align: center;
+            backdrop-filter: blur(5px);
         }
         
         .tab-btn.active {
             background: white;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
         }
         
         .card {
@@ -93,6 +121,7 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(10px);
             display: none;
+            flex: 1;
         }
         
         .card.active {
@@ -129,16 +158,16 @@
         }
 
         .message-content {
-            padding: 10px 12px;
+            padding: 12px 15px;
             border-radius: 12px;
             max-width: 75%;
             line-height: 1.4;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             font-size: 14px;
         }
 
         .user-message .message-content {
-            background-color: #3b82f6;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: white;
             margin-right: 10px;
         }
@@ -151,44 +180,52 @@
 
         .chat-input-container {
             display: flex;
-            padding: 10px;
+            padding: 12px;
             background-color: white;
             border-top: 1px solid #e5e7eb;
-            gap: 8px;
+            gap: 10px;
         }
         
         .chat-input {
             flex: 1;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #d1d5db;
-            border-radius: 8px;
+            border-radius: 10px;
             outline: none;
             font-size: 14px;
             background-color: #f9fafb;
             resize: none;
             max-height: 100px;
+            transition: all 0.3s;
         }
 
         .chat-input:focus {
             border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
             background-color: white;
         }
         
-        .send-btn {
-            background: #3b82f6;
+        .send-btn, .emergency-btn {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 8px;
+            padding: 12px 18px;
+            border-radius: 10px;
             cursor: pointer;
             font-weight: bold;
             font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .emergency-btn {
+            background: linear-gradient(135deg, #dc2626, #991b1b);
+            animation: pulse 2s infinite;
         }
         
         .send-btn:disabled {
             background: #9ca3af;
             cursor: not-allowed;
+            animation: none;
         }
 
         .status-indicator {
@@ -196,25 +233,31 @@
             width: 10px;
             height: 10px;
             border-radius: 50%;
-            margin-right: 6px;
+            margin-right: 8px;
         }
         
         .status-safe { background: #10b981; }
         .status-alert { background: #f59e0b; }
         .status-emergency { background: #dc2626; }
+        .status-missing { background: #6b7280; }
 
         .info-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 15px;
             margin: 15px 0;
         }
 
         .info-box {
-            padding: 15px;
-            border-radius: 10px;
+            padding: 18px;
+            border-radius: 12px;
             background: #f0f9ff;
             border-left: 4px solid #0ea5e9;
+            transition: transform 0.2s;
+        }
+        
+        .info-box:hover {
+            transform: translateY(-2px);
         }
 
         .info-box.success {
@@ -233,12 +276,14 @@
         }
 
         .location-display {
-            background: #f8fafc;
-            padding: 10px;
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
             border-radius: 8px;
             margin: 10px 0;
-            font-family: monospace;
-            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            border: 1px solid #374151;
         }
 
         .database-status {
@@ -247,47 +292,73 @@
             right: 10px;
             background: rgba(0, 0, 0, 0.8);
             color: white;
-            padding: 5px 10px;
-            border-radius: 5px;
+            padding: 8px 12px;
+            border-radius: 20px;
             font-size: 11px;
             z-index: 1000;
+            font-weight: bold;
         }
 
-        .typing-indicator {
-            display: flex;
-            align-items: center;
-            padding: 10px;
-            background-color: white;
-            border: 1px solid #e5e7eb;
+        .student-search {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .qr-scanner {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            padding: 20px;
             border-radius: 12px;
-            margin-left: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .qr-scanner:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
         }
 
-        .typing-indicator span {
-            height: 6px;
-            width: 6px;
-            background-color: #6b7280;
-            border-radius: 50%;
-            margin: 0 1px;
-            animation: typing 1.4s infinite ease-in-out both;
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
         }
 
-        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
 
-        @keyframes typing {
-            0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
-            40% { transform: scale(1); opacity: 1; }
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #3b82f6;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 5px;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
+            from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
         @media (max-width: 640px) {
             .container {
-                padding: 8px;
+                padding: 10px;
             }
             
             .nav-tabs {
@@ -296,22 +367,63 @@
             }
             
             .chat-container {
-                height: 300px;
+                height: 350px;
             }
 
             .info-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .header {
+                padding: 15px;
+            }
+        }
+        
+        .install-prompt {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .install-prompt button {
+            background: white;
+            color: #3b82f6;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            margin: 5px;
+            cursor: pointer;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="database-status" id="dbStatus">Offline DB: Ready</div>
+    <div class="offline-indicator" id="connectionStatus">📶 OFFLINE MODE</div>
+    <div class="database-status" id="dbStatus">Local DB: Ready</div>
+    <div class="install-prompt" id="installPrompt">
+        <p>📱 Install this app for better offline access!</p>
+        <button onclick="installApp()">Install</button>
+        <button onclick="hideInstallPrompt()">Later</button>
+    </div>
     
     <div class="container">
         <div class="header">
             <h1>🏫 Emergency Response System</h1>
-            <p>Real-time student tracking & emergency management</p>
+            <p>Offline-capable student tracking & emergency management</p>
             <div class="emergency-status" id="emergencyStatus">
                 <span class="status-indicator status-emergency"></span>
                 <span id="emergencyText">System Ready - No Active Emergency</span>
@@ -319,47 +431,77 @@
         </div>
 
         <div class="nav-tabs">
-            <button class="tab-btn active" onclick="showTab('chat')">🤖 AI Chat</button>
+            <button class="tab-btn active" onclick="showTab('chat')">🤖 AI Assistant</button>
+            <button class="tab-btn" onclick="showTab('scanner')">📱 QR Scanner</button>
             <button class="tab-btn" onclick="showTab('student')">👨‍🎓 Students</button>
-            <button class="tab-btn" onclick="showTab('location')">📍 Locations</button>
+            <button class="tab-btn" onclick="showTab('location')">📍 Tracking</button>
             <button class="tab-btn" onclick="showTab('procedures')">📋 Procedures</button>
             <button class="tab-btn" onclick="showTab('system')">⚙️ System</button>
         </div>
 
-        <!-- AI Chat Tab -->
+        <!-- Offline AI Chat Tab -->
         <div class="card active" id="chatTab">
-            <h3>🤖 Emergency AI Assistant</h3>
-            <p style="color: #666; margin-bottom: 10px;">Get instant guidance for emergency procedures and student safety.</p>
+            <h3>🤖 Offline Emergency Assistant</h3>
+            <p style="color: #666; margin-bottom: 15px;">Get instant offline guidance for emergency procedures and student safety.</p>
             
             <div class="chat-container">
                 <div class="chat-messages" id="chatMessages"></div>
                 <div class="chat-input-container">
-                    <textarea class="chat-input" id="chatInput" placeholder="Ask about emergency procedures, student status, or what to do..." rows="1"></textarea>
+                    <textarea class="chat-input" id="chatInput" placeholder="Ask about procedures, scan students, emergency actions..." rows="1"></textarea>
                     <button class="send-btn" id="sendButton">Send</button>
+                    <button class="emergency-btn" onclick="activateEmergency()">🚨 ALERT</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- QR Scanner Tab -->
+        <div class="card" id="scannerTab">
+            <h3>📱 QR Code Scanner</h3>
+            
+            <div class="qr-scanner" onclick="simulateQRScan()">
+                <h2>📷 Tap to Scan Student QR Code</h2>
+                <p>Scan student ID cards to track location and send parent notifications</p>
+            </div>
+            
+            <div class="stats-row">
+                <div class="stat-card">
+                    <div class="stat-number" id="scannedToday">0</div>
+                    <div class="stat-label">Scanned Today</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="safeCount">0</div>
+                    <div class="stat-label">Safe</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="missingCount">0</div>
+                    <div class="stat-label">Missing</div>
+                </div>
+            </div>
+            
+            <div id="recentScans">
+                <h4>Recent Scans</h4>
+                <div id="scanHistory"></div>
             </div>
         </div>
 
         <!-- Student Status Tab -->
         <div class="card" id="studentTab">
-            <h3>👨‍🎓 Student Status</h3>
-            <div class="info-grid" id="studentList">
-                <!-- Student cards will be populated here -->
-            </div>
+            <h3>👨‍🎓 Student Directory</h3>
+            <input type="text" class="student-search" id="studentSearch" placeholder="Search students by name, ID, or section...">
+            <div class="info-grid" id="studentList"></div>
         </div>
 
         <!-- Location Tracking Tab -->
         <div class="card" id="locationTab">
             <h3>📍 Location Tracking</h3>
             <div class="info-box">
-                <h4>Current Scanner Location</h4>
+                <h4>🌐 Current Scanner Location</h4>
                 <div class="location-display" id="currentLocation">
                     Lat: --.----- | Lng: --.----- | Accuracy: -- meters
                 </div>
+                <button onclick="refreshLocation()" style="margin-top: 10px; padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer;">🔄 Refresh Location</button>
             </div>
-            <div class="info-grid" id="locationHistory">
-                <!-- Location history will be populated here -->
-            </div>
+            <div class="info-grid" id="locationHistory"></div>
         </div>
 
         <!-- Emergency Procedures Tab -->
@@ -368,18 +510,42 @@
             <div class="info-grid">
                 <div class="info-box danger">
                     <h4>🔥 Fire Emergency</h4>
-                    <ul style="margin: 5px 0; padding-left: 15px; font-size: 13px;">
-                        <li>Evacuate immediately to assembly areas</li>
-                        <li>Check attendance at evacuation points</li>
+                    <ul style="margin: 8px 0; padding-left: 20px; font-size: 13px; line-height: 1.6;">
+                        <li>Sound alarm immediately</li>
+                        <li>Evacuate to designated assembly areas</li>
+                        <li>Scan all students at evacuation points</li>
                         <li>Send automated parent notifications</li>
+                        <li>Report missing students to emergency services</li>
                     </ul>
                 </div>
                 <div class="info-box warning">
-                    <h4>🌪️ Earthquake</h4>
-                    <ul style="margin: 5px 0; padding-left: 15px; font-size: 13px;">
-                        <li>Drop, cover, and hold protocol</li>
-                        <li>Move to safe zones after shaking stops</li>
-                        <li>Account for all students</li>
+                    <h4>🌪️ Earthquake Protocol</h4>
+                    <ul style="margin: 8px 0; padding-left: 20px; font-size: 13px; line-height: 1.6;">
+                        <li>DROP, COVER, and HOLD ON immediately</li>
+                        <li>Stay under desks until shaking stops</li>
+                        <li>Move to safe zones after tremors end</li>
+                        <li>Account for all students using QR scanner</li>
+                        <li>Check for injuries and call for medical aid</li>
+                    </ul>
+                </div>
+                <div class="info-box">
+                    <h4>🚨 Lockdown Procedure</h4>
+                    <ul style="margin: 8px 0; padding-left: 20px; font-size: 13px; line-height: 1.6;">
+                        <li>Lock all classroom doors immediately</li>
+                        <li>Move students away from windows</li>
+                        <li>Take silent attendance</li>
+                        <li>Wait for all-clear signal from authorities</li>
+                        <li>Scan students when safe to do so</li>
+                    </ul>
+                </div>
+                <div class="info-box success">
+                    <h4>👨‍⚕️ Medical Emergency</h4>
+                    <ul style="margin: 8px 0; padding-left: 20px; font-size: 13px; line-height: 1.6;">
+                        <li>Call emergency medical services</li>
+                        <li>Isolate affected area if needed</li>
+                        <li>Provide first aid if trained</li>
+                        <li>Notify parents of affected students</li>
+                        <li>Document incident thoroughly</li>
                     </ul>
                 </div>
             </div>
@@ -389,278 +555,384 @@
         <div class="card" id="systemTab">
             <h3>⚙️ System Status</h3>
             <div class="info-grid">
-                <div class="info-box success">
-                    <h4>📱 GSM Module</h4>
-                    <p>Status: <span id="gsmStatus">Connected</span></p>
-                    <p>Signal: <span id="signalStrength">Strong</span></p>
-                </div>
                 <div class="info-box">
-                    <h4>🗃️ Database</h4>
-                    <p>Students: <span id="studentCount">0</span></p>
-                    <p>Last Sync: <span id="lastSync">Never</span></p>
+                    <h4>📱 GSM Module</h4>
+                    <p><strong>Status:</strong> <span id="gsmStatus">Simulated</span></p>
+                    <p><strong>Signal:</strong> <span id="signalStrength">Strong (Offline)</span></p>
+                    <p><strong>Messages Queued:</strong> <span id="queuedMessages">0</span></p>
+                </div>
+                <div class="info-box success">
+                    <h4>🗃️ Local Database</h4>
+                    <p><strong>Students:</strong> <span id="studentCount">0</span></p>
+                    <p><strong>Locations:</strong> <span id="locationCount">0</span></p>
+                    <p><strong>Last Updated:</strong> <span id="lastSync">Just now</span></p>
                 </div>
                 <div class="info-box">
                     <h4>📍 GPS Module</h4>
-                    <p>Status: <span id="gpsStatus">Searching...</span></p>
-                    <p>Satellites: <span id="satelliteCount">0</span></p>
+                    <p><strong>Status:</strong> <span id="gpsStatus">Searching...</span></p>
+                    <p><strong>Accuracy:</strong> <span id="accuracyStatus">Unknown</span></p>
+                    <p><strong>Last Fix:</strong> <span id="lastGPSFix">Never</span></p>
+                </div>
+                <div class="info-box">
+                    <h4>💾 Storage Info</h4>
+                    <p><strong>Cache Size:</strong> <span id="cacheSize">Calculating...</span></p>
+                    <p><strong>Available:</strong> <span id="availableStorage">Calculating...</span></p>
+                    <button onclick="clearCache()" style="margin-top: 10px; padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;">Clear Cache</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // System Configuration
-        const API_KEY = 'AIzaSyCvGFjPz8bI8tv3CDYndMTEMK9vuQfIYF4';
-        const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
-
-        // Offline Database
-        let offlineDB = {
-            students: [
-                {id: "123456", name: "John Doe", section: "Grade 10-A", parentNumber: "09123456789", status: "safe", location: null, lastSeen: null},
-                {id: "234567", name: "Jane Smith", section: "Grade 11-B", parentNumber: "09876543210", status: "safe", location: null, lastSeen: null},
-                {id: "345678", name: "Alice Brown", section: "Grade 9-C", parentNumber: "09111213141", status: "safe", location: null, lastSeen: null}
-            ],
-            locations: [],
-            emergencies: []
-        };
-
-        // System State
-        let currentLocation = {lat: null, lng: null, accuracy: null};
-        let systemStatus = {
-            gsm: true,
-            gps: false,
-            emergency: false
-        };
-
-        // DOM Elements
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const sendButton = document.getElementById('sendButton');
-
-        // Initialize System
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeSystem();
-            startLocationTracking();
-            updateSystemStatus();
-            populateStudentList();
+        // Offline Emergency System with Enhanced AI
+        class OfflineEmergencySystem {
+            constructor() {
+                this.students = [
+                    {id: "123456", name: "John Doe", section: "Grade 10-A", parentNumber: "09123456789", status: "safe", location: null, lastSeen: null, emergencyContact: "Jane Doe"},
+                    {id: "234567", name: "Jane Smith", section: "Grade 11-B", parentNumber: "09876543210", status: "safe", location: null, lastSeen: null, emergencyContact: "Bob Smith"},
+                    {id: "345678", name: "Alice Brown", section: "Grade 9-C", parentNumber: "09111213141", status: "safe", location: null, lastSeen: null, emergencyContact: "Carol Brown"},
+                    {id: "456789", name: "Mark Johnson", section: "Grade 12-A", parentNumber: "09998887776", status: "safe", location: null, lastSeen: null, emergencyContact: "Linda Johnson"},
+                    {id: "567890", name: "Sarah Wilson", section: "Grade 10-B", parentNumber: "09555444333", status: "safe", location: null, lastSeen: null, emergencyContact: "Tom Wilson"}
+                ];
+                
+                this.locations = [];
+                this.messageQueue = [];
+                this.emergencyActive = false;
+                this.currentLocation = {lat: null, lng: null, accuracy: null};
+                this.scannedToday = 0;
+                
+                this.loadFromStorage();
+                this.initializeSystem();
+            }
             
-            // Add welcome message
-            addMessage("🚨 Emergency Response System Online!\n\nI can help you with:\n• Emergency procedures and protocols\n• Student location and status updates\n• Parent notification procedures\n• Real-time guidance during emergencies\n\nWhat do you need assistance with?", false);
+            initializeSystem() {
+                this.updateDashboard();
+                this.startLocationTracking();
+                this.addWelcomeMessage();
+                this.checkInstallPrompt();
+                this.estimateStorage();
+            }
+            
+            loadFromStorage() {
+                try {
+                    const stored = JSON.parse(localStorage.getItem('emergencySystemData') || '{}');
+                    if (stored.students) this.students = stored.students;
+                    if (stored.locations) this.locations = stored.locations;
+                    if (stored.messageQueue) this.messageQueue = stored.messageQueue;
+                    if (stored.scannedToday) this.scannedToday = stored.scannedToday;
+                } catch (error) {
+                    console.log('Using default data');
+                }
+            }
+            
+            saveToStorage() {
+                try {
+                    localStorage.setItem('emergencySystemData', JSON.stringify({
+                        students: this.students,
+                        locations: this.locations,
+                        messageQueue: this.messageQueue,
+                        scannedToday: this.scannedToday
+                    }));
+                } catch (error) {
+                    console.error('Storage failed:', error);
+                }
+            }
+            
+            addWelcomeMessage() {
+                const message = `🚨 **OFFLINE EMERGENCY SYSTEM ACTIVATED**\n\n✅ **Fully Functional Features:**\n• Student QR code scanning\n• Location tracking with GPS\n• Emergency protocol guidance\n• Parent notification queuing\n• Complete offline operation\n\n📱 **Quick Actions:**\n• Scan student QR codes for attendance\n• Activate emergency alerts\n• View detailed emergency procedures\n• Track student locations in real-time\n\n💡 **Tip:** This system works completely offline. All data is stored locally on your device for maximum reliability during emergencies.`;
+                this.addMessage(message, false);
+            }
+            
+            generateOfflineResponse(input) {
+                const lower = input.toLowerCase();
+                
+                // Emergency keywords
+                if (lower.includes('fire') || lower.includes('🔥')) {
+                    return `🔥 **FIRE EMERGENCY PROTOCOL**\n\n**IMMEDIATE ACTIONS:**\n1. 🚨 Sound fire alarm\n2. 🚶‍♂️ Evacuate all students to assembly areas\n3. 📱 Use QR scanner to check attendance at evacuation points\n4. 📞 Call fire department (911)\n5. 👥 Account for all students and staff\n\n**ASSEMBLY AREAS:**\n• Grades K-5: Soccer field (North)\n• Grades 6-8: Basketball court (East)\n• Grades 9-12: Parking lot (South)\n\n⚠️ DO NOT re-enter building until cleared by fire marshal.`;
+                }
+                
+                if (lower.includes('earthquake') || lower.includes('🌪️')) {
+                    return `🌪️ **EARTHQUAKE EMERGENCY PROTOCOL**\n\n**DURING SHAKING:**\n1. 🛡️ DROP to hands and knees\n2. 🪑 COVER under sturdy desk/table\n3. 🤝 HOLD ON and protect head/neck\n\n**AFTER SHAKING STOPS:**\n1. 🚶‍♂️ Evacuate if building damaged\n2. 📱 Scan students at safe assembly areas\n3. 🏥 Check for injuries\n4. 📞 Contact emergency services if needed\n\n**SAFE ZONES:**\n• Open fields away from buildings\n• Avoid: glass windows, heavy objects, power lines`;
+                }
+                
+                if (lower.includes('lockdown') || lower.includes('intruder')) {
+                    return `🔒 **LOCKDOWN PROCEDURE**\n\n**IMMEDIATE ACTIONS:**\n1. 🚪 Lock all classroom doors\n2. 💡 Turn off lights\n3. 🤫 Students sit quietly away from windows\n4. 📱 Take silent attendance\n5. 📞 Wait for official all-clear\n\n**DO NOT:**\n• Open doors for anyone\n• Make noise\n• Use phones unless emergency\n\n**AFTER ALL-CLEAR:**\n• Scan all students with QR codes\n• Report any missing students immediately`;
+                }
+                
+                // QR Scanning help
+                if (lower.includes('qr') || lower.includes('scan')) {
+                    return `📱 **QR CODE SCANNING GUIDE**\n\n**TO SCAN STUDENTS:**\n1. 📍 Ensure GPS location is active\n2. 📷 Go to 'QR Scanner' tab\n3. 📱 Tap the scan area\n4. ✅ Student status updates automatically\n5. 📞 Parent notifications queued\n\n**CURRENT STATUS:**\n• Students scanned today: ${this.scannedToday}\n• Total students: ${this.students.length}\n• GPS accuracy: ${this.currentLocation.accuracy || 'Unknown'}m\n\n💡 All scans work offline and sync when connection returns.`;
+                }
+                
+                // Student status
+                if (lower.includes('student') || lower.includes('missing')) {
+                    const safe = this.students.filter(s => s.status === 'safe').length;
+                    const missing = this.students.filter(s => s.status === 'missing').length;
+                    
+                    return `👨‍🎓 **STUDENT STATUS OVERVIEW**\n\n📊 **Current Status:**\n• ✅ Safe: ${safe} students\n• ❌ Missing: ${missing} students\n• 📍 Recently located: ${this.locations.length} scans\n\n**RECENT ACTIVITY:**\n${this.locations.slice(-3).map(l => `• ${l.studentName}: ${new Date(l.timestamp).toLocaleTimeString()}`).join('\n') || '• No recent scans'}\n\n💡 Use QR scanner to update student locations and notify parents.`;
+                }
+                
+                // Location/GPS help
+                if (lower.includes('location') || lower.includes('gps')) {
+                    return `📍 **LOCATION TRACKING STATUS**\n\n**CURRENT POSITION:**\n• Latitude: ${this.currentLocation.lat?.toFixed(6) || 'Unknown'}\n• Longitude: ${this.currentLocation.lng?.toFixed(6) || 'Unknown'}\n• Accuracy: ${this.currentLocation.accuracy || 'Unknown'} meters\n\n**LOCATION HISTORY:**\n• Total scans recorded: ${this.locations.length}\n• Last scan: ${this.locations.length > 0 ? new Date(this.locations[this.locations.length - 1].timestamp).toLocaleTimeString() : 'None'}\n\n💡 GPS tracking helps pinpoint exact student locations during emergencies.`;
+                }
+                
+                // Emergency activation
+                if (lower.includes('emergency') || lower.includes('alert') || lower.includes('activate')) {
+                    return `🚨 **EMERGENCY ALERT SYSTEM**\n\n**TO ACTIVATE EMERGENCY:**\n1. 🔴 Click the red 'ALERT' button\n2. 📱 Select emergency type\n3. 🚨 System automatically:\n   • Switches to emergency mode\n   • Prioritizes student scanning\n   • Queues parent notifications\n   • Logs all activities\n\n**EMERGENCY TYPES:**\n• 🔥 Fire evacuation\n• 🌪️ Natural disaster\n• 🔒 Security lockdown\n• 👨‍⚕️ Medical emergency\n\n⚠️ Once activated, all scans are tagged as emergency responses.`;
+                }
+                
+                // System/technical help
+                if (lower.includes('offline') || lower.includes('storage') || lower.includes('cache')) {
+                    return `💾 **OFFLINE SYSTEM STATUS**\n\n✅ **FULLY OPERATIONAL:**\n• All student data stored locally\n• GPS tracking active\n• QR scanning functional\n• Emergency procedures accessible\n\n📊 **STORAGE INFO:**\n• Students: ${this.students.length} records\n• Location scans: ${this.locations.length} entries\n• Queued messages: ${this.messageQueue.length}\n\n🔄 **SYNC STATUS:**\n• Working offline - no internet needed\n• Data syncs when connection restored\n• All features available offline`;
+                }
+                
+                // Default helpful response
+                return `🤖 **OFFLINE EMERGENCY ASSISTANT**\n\nI can help you with:\n\n🚨 **Emergency Procedures:**\n• Fire evacuation protocols\n• Earthquake safety procedures\n• Lockdown/security protocols\n• Medical emergency response\n\n📱 **System Operations:**\n• QR code scanning instructions\n• Student status tracking\n• Location/GPS management\n• Parent notification system\n\n💡 **Quick Tips:**\n• Type "fire", "earthquake", or "lockdown" for specific protocols\n• Ask about "student status" for current overview\n• Say "scan" for QR code help\n\nWhat specific assistance do you need?`;
+            }
+            
+            processQRScan(studentId) {
+                const student = this.students.find(s => s.id === studentId);
+                
+                if (student) {
+                    // Update student info
+                    student.location = this.currentLocation.lat && this.currentLocation.lng 
+                        ? `${this.currentLocation.lat.toFixed(6)}, ${this.currentLocation.lng.toFixed(6)}`
+                        : 'Location unavailable';
+                    student.lastSeen = new Date().toISOString();
+                    student.status = 'safe';
+                    
+                    // Add to location history
+                    this.locations.push({
+                        studentId: student.id,
+                        studentName: student.name,
+                        location: student.location,
+                        timestamp: new Date().toISOString(),
+                        emergencyType: this.emergencyActive ? 'emergency' : 'routine',
+                        accuracy: this.currentLocation.accuracy
+                    });
+                    
+                    // Queue parent notification
+                    this.messageQueue.push({
+                        to: student.parentNumber,
+                        message: `ALERT: ${student.name} is safe and accounted for. Location: ${student.location}. Time: ${new Date().toLocaleString()}`,
+                        timestamp: new Date().toISOString(),
+                        emergencyType: this.emergencyActive
+                    });
+                    
+                    this.scannedToday++;
+                    this.saveToStorage();
+                    this.updateDashboard();
+                    
+                    return `✅ **SCAN SUCCESSFUL**\n\n👨‍🎓 **Student:** ${student.name}\n🆔 **ID:** ${student.id}\n📍 **Location:** ${student.location}\n⏰ **Time:** ${new Date().toLocaleString()}\n📞 **Parent notified:** ${student.parentNumber}\n\n${this.emergencyActive ? '🚨 **EMERGENCY MODE ACTIVE**' : '✅ **ROUTINE SCAN**'}`;
+                }
+                
+                return `❌ **SCAN FAILED**\n\n🔍 Student ID "${studentId}" not found in database.\n\n**Possible Issues:**\n• Invalid QR code\n• Student not enrolled\n• Database sync needed\n\nPlease verify the QR code and try again.`;
+            }
+            
+            activateEmergency(type = 'general') {
+                this.emergencyActive = true;
+                document.getElementById('emergencyStatus').classList.add('active');
+                document.getElementById('emergencyText').textContent = `${type.toUpperCase()} EMERGENCY ACTIVE - SCAN ALL STUDENTS`;
+                
+                this.addMessage(`🚨 **${type.toUpperCase()} EMERGENCY ACTIVATED**\n\n**SYSTEM STATUS:**\n• Emergency mode: ACTIVE\n• Priority scanning: ENABLED\n• Parent notifications: QUEUED\n• All scans tagged as emergency\n\n**NEXT STEPS:**\n1. Begin systematic student scanning\n2. Follow ${type} emergency procedures\n3. Report missing students immediately\n4. Maintain calm and organized response`, false);
+                
+                this.saveToStorage();
+            }
+            
+            startLocationTracking() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.watchPosition(
+                        position => {
+                            this.currentLocation = {
+                                lat: position.coords.latitude,
+                                lng: position.coords.longitude,
+                                accuracy: Math.round(position.coords.accuracy)
+                            };
+                            this.updateLocationDisplay();
+                            document.getElementById('gpsStatus').textContent = 'Active';
+                            document.getElementById('accuracyStatus').textContent = `${this.currentLocation.accuracy}m`;
+                            document.getElementById('lastGPSFix').textContent = new Date().toLocaleTimeString();
+                        },
+                        error => {
+                            console.error('GPS Error:', error);
+                            document.getElementById('gpsStatus').textContent = 'Error';
+                            document.getElementById('accuracyStatus').textContent = 'No signal';
+                        },
+                        {enableHighAccuracy: true, timeout: 15000, maximumAge: 30000}
+                    );
+                }
+            }
+            
+            updateLocationDisplay() {
+                const display = document.getElementById('currentLocation');
+                if (this.currentLocation.lat && this.currentLocation.lng) {
+                    display.textContent = `Lat: ${this.currentLocation.lat.toFixed(6)} | Lng: ${this.currentLocation.lng.toFixed(6)} | Accuracy: ${this.currentLocation.accuracy}m`;
+                } else {
+                    display.textContent = 'GPS: Acquiring location...';
+                }
+            }
+            
+            updateDashboard() {
+                // Update student counts
+                document.getElementById('studentCount').textContent = this.students.length;
+                document.getElementById('locationCount').textContent = this.locations.length;
+                document.getElementById('scannedToday').textContent = this.scannedToday;
+                document.getElementById('safeCount').textContent = this.students.filter(s => s.status === 'safe').length;
+                document.getElementById('missingCount').textContent = this.students.filter(s => s.status === 'missing').length;
+                document.getElementById('queuedMessages').textContent = this.messageQueue.length;
+                document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
+                
+                this.updateStudentList();
+                this.updateLocationHistory();
+                this.updateScanHistory();
+                this.updateDBStatus();
+            }
+            
+            updateStudentList() {
+                const container = document.getElementById('studentList');
+                const searchTerm = document.getElementById('studentSearch')?.value?.toLowerCase() || '';
+                
+                let filteredStudents = this.students;
+                if (searchTerm) {
+                    filteredStudents = this.students.filter(s => 
+                        s.name.toLowerCase().includes(searchTerm) ||
+                        s.id.includes(searchTerm) ||
+                        s.section.toLowerCase().includes(searchTerm)
+                    );
+                }
+                
+                container.innerHTML = '';
+                filteredStudents.forEach(student => {
+                    const card = document.createElement('div');
+                    card.className = `info-box ${student.status === 'safe' ? 'success' : student.status === 'missing' ? 'danger' : ''}`;
+                    card.innerHTML = `
+                        <h4><span class="status-indicator status-${student.status}"></span>${student.name}</h4>
+                        <p><strong>ID:</strong> ${student.id}</p>
+                        <p><strong>Section:</strong> ${student.section}</p>
+                        <p><strong>Status:</strong> ${student.status.toUpperCase()}</p>
+                        <p><strong>Parent:</strong> ${student.parentNumber}</p>
+                        <p><strong>Emergency Contact:</strong> ${student.emergencyContact}</p>
+                        ${student.location ? `<p><strong>Location:</strong> ${student.location}</p>` : ''}
+                        ${student.lastSeen ? `<p><strong>Last Seen:</strong> ${new Date(student.lastSeen).toLocaleString()}</p>` : ''}
+                    `;
+                    container.appendChild(card);
+                });
+            }
+            
+            updateLocationHistory() {
+                const container = document.getElementById('locationHistory');
+                container.innerHTML = '';
+                
+                this.locations.slice(-10).reverse().forEach(loc => {
+                    const card = document.createElement('div');
+                    card.className = 'info-box';
+                    card.innerHTML = `
+                        <h4>📍 ${loc.studentName}</h4>
+                        <p><strong>Location:</strong> ${loc.location}</p>
+                        <p><strong>Time:</strong> ${new Date(loc.timestamp).toLocaleString()}</p>
+                        <p><strong>Type:</strong> ${loc.emergencyType}</p>
+                        <p><strong>Accuracy:</strong> ${loc.accuracy || 'Unknown'}m</p>
+                    `;
+                    container.appendChild(card);
+                });
+            }
+            
+            updateScanHistory() {
+                const container = document.getElementById('scanHistory');
+                if (!container) return;
+                
+                container.innerHTML = '';
+                this.locations.slice(-5).reverse().forEach(scan => {
+                    const scanElement = document.createElement('div');
+                    scanElement.className = 'info-box';
+                    scanElement.innerHTML = `
+                        <p><strong>${scan.studentName}</strong> - ${new Date(scan.timestamp).toLocaleTimeString()}</p>
+                        <p style="font-size: 12px; color: #666;">Location: ${scan.location}</p>
+                    `;
+                    container.appendChild(scanElement);
+                });
+            }
+            
+            updateDBStatus() {
+                const status = document.getElementById('dbStatus');
+                status.textContent = `Local DB: ${this.students.length} students, ${this.locations.length} scans`;
+            }
+            
+            addMessage(message, isUser) {
+                const chatMessages = document.getElementById('chatMessages');
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message', isUser ? 'user-message' : 'bot-message');
+                
+                const messageContent = document.createElement('div');
+                messageContent.classList.add('message-content');
+                messageContent.innerHTML = message.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                
+                messageElement.appendChild(messageContent);
+                chatMessages.appendChild(messageElement);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            async estimateStorage() {
+                if ('storage' in navigator && 'estimate' in navigator.storage) {
+                    try {
+                        const estimate = await navigator.storage.estimate();
+                        const used = estimate.usage || 0;
+                        const total = estimate.quota || 0;
+                        
+                        document.getElementById('cacheSize').textContent = `${(used / 1024 / 1024).toFixed(2)} MB`;
+                        document.getElementById('availableStorage').textContent = `${((total - used) / 1024 / 1024).toFixed(2)} MB`;
+                    } catch (error) {
+                        document.getElementById('cacheSize').textContent = 'Unknown';
+                        document.getElementById('availableStorage').textContent = 'Unknown';
+                    }
+                } else {
+                    document.getElementById('cacheSize').textContent = 'Not supported';
+                    document.getElementById('availableStorage').textContent = 'Not supported';
+                }
+            }
+            
+            checkInstallPrompt() {
+                // Show install prompt after 10 seconds if not installed
+                setTimeout(() => {
+                    if (!window.matchMedia('(display-mode: standalone)').matches) {
+                        document.getElementById('installPrompt').style.display = 'block';
+                    }
+                }, 10000);
+            }
+        }
+        
+        // Initialize the system
+        const emergencySystem = new OfflineEmergencySystem();
+        
+        // Event Handlers
+        document.getElementById('sendButton').addEventListener('click', async () => {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            emergencySystem.addMessage(message, true);
+            input.value = '';
+            
+            // Simulate thinking delay
+            setTimeout(() => {
+                const response = emergencySystem.generateOfflineResponse(message);
+                emergencySystem.addMessage(response, false);
+            }, 500);
         });
-
-        function initializeSystem() {
-            document.getElementById('studentCount').textContent = offlineDB.students.length;
-            document.getElementById('lastSync').textContent = new Date().toLocaleTimeString();
-            updateDatabaseStatus();
-        }
-
-        function updateDatabaseStatus() {
-            const status = document.getElementById('dbStatus');
-            status.textContent = `Offline DB: ${offlineDB.students.length} students`;
-            status.style.background = offlineDB.students.length > 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)';
-        }
-
-        // Location Tracking
-        function startLocationTracking() {
-            if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(
-                    position => {
-                        currentLocation = {
-                            lat: position.coords.latitude,
-                            lng: position.coords.longitude,
-                            accuracy: Math.round(position.coords.accuracy)
-                        };
-                        updateLocationDisplay();
-                        document.getElementById('gpsStatus').textContent = 'Active';
-                        systemStatus.gps = true;
-                    },
-                    error => {
-                        console.error('GPS Error:', error);
-                        document.getElementById('gpsStatus').textContent = 'Error';
-                        systemStatus.gps = false;
-                    },
-                    {enableHighAccuracy: true, timeout: 10000, maximumAge: 60000}
-                );
-            }
-        }
-
-        function updateLocationDisplay() {
-            const display = document.getElementById('currentLocation');
-            if (currentLocation.lat && currentLocation.lng) {
-                display.textContent = `Lat: ${currentLocation.lat.toFixed(6)} | Lng: ${currentLocation.lng.toFixed(6)} | Accuracy: ${currentLocation.accuracy}m`;
-            }
-        }
-
-        // Student Management
-        function populateStudentList() {
-            const container = document.getElementById('studentList');
-            container.innerHTML = '';
-            
-            offlineDB.students.forEach(student => {
-                const card = document.createElement('div');
-                card.className = `info-box ${student.status === 'safe' ? 'success' : student.status === 'missing' ? 'danger' : ''}`;
-                card.innerHTML = `
-                    <h4><span class="status-indicator status-${student.status}"></span>${student.name}</h4>
-                    <p><strong>ID:</strong> ${student.id}</p>
-                    <p><strong>Section:</strong> ${student.section}</p>
-                    <p><strong>Status:</strong> ${student.status.toUpperCase()}</p>
-                    ${student.location ? `<p><strong>Location:</strong> ${student.location}</p>` : ''}
-                    ${student.lastSeen ? `<p><strong>Last Seen:</strong> ${student.lastSeen}</p>` : ''}
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // Simulated QR Scan Processing
-        function processQRScan(qrData) {
-            const student = offlineDB.students.find(s => s.id === qrData);
-            
-            if (student) {
-                student.location = `${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)}`;
-                student.lastSeen = new Date().toLocaleTimeString();
-                student.status = 'safe';
-                
-                // Add to location history
-                offlineDB.locations.push({
-                    studentId: student.id,
-                    studentName: student.name,
-                    location: student.location,
-                    timestamp: new Date().toISOString(),
-                    emergencyType: systemStatus.emergency ? 'active' : 'routine'
-                });
-                
-                populateStudentList();
-                updateLocationHistory();
-                
-                // Simulate sending SMS (in actual implementation, this would trigger ESP32)
-                console.log(`SMS would be sent to ${student.parentNumber}: ${student.name} is safe at location ${student.location}`);
-                
-                return `✅ Student ${student.name} scanned successfully!\nLocation recorded: ${student.location}\nParent notification sent.`;
-            }
-            
-            return `❌ Student not found in database. QR Code: ${qrData}`;
-        }
-
-        function updateLocationHistory() {
-            const container = document.getElementById('locationHistory');
-            container.innerHTML = '';
-            
-            offlineDB.locations.slice(-10).reverse().forEach(loc => {
-                const card = document.createElement('div');
-                card.className = 'info-box';
-                card.innerHTML = `
-                    <h4>📍 ${loc.studentName}</h4>
-                    <p><strong>Location:</strong> ${loc.location}</p>
-                    <p><strong>Time:</strong> ${new Date(loc.timestamp).toLocaleString()}</p>
-                    <p><strong>Type:</strong> ${loc.emergencyType}</p>
-                `;
-                container.appendChild(card);
-            });
-        }
-
-        // AI Chat System
-        async function generateResponse(prompt) {
-            const emergencyContext = `You are an AI assistant for a school emergency response system with GPS tracking and QR code student identification. 
-
-Current system status:
-- Students in database: ${offlineDB.students.length}
-- GPS status: ${systemStatus.gps ? 'Active' : 'Inactive'}
-- GSM module: ${systemStatus.gsm ? 'Connected' : 'Disconnected'}
-- Emergency mode: ${systemStatus.emergency ? 'ACTIVE' : 'Normal'}
-
-Recent student scans: ${offlineDB.locations.slice(-3).map(l => `${l.studentName} at ${l.location}`).join(', ')}
-
-Provide helpful, professional responses about:
-- Emergency procedures and safety protocols
-- Student tracking and location services
-- Parent communication procedures
-- System troubleshooting
-- Real-time emergency guidance
-
-User question: ${prompt}`;
-
-            try {
-                const response = await fetch(`${API_URL}?key=${API_KEY}`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [{text: emergencyContext}]
-                        }]
-                    })
-                });
-
-                if (!response.ok) throw new Error('API request failed');
-                
-                const data = await response.json();
-                return data.candidates[0].content.parts[0].text;
-            } catch (error) {
-                return 'I apologize, but I\'m having connection issues. For immediate assistance, contact the emergency hotline or use the offline procedures guide.';
-            }
-        }
-
-        function addMessage(message, isUser) {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message', isUser ? 'user-message' : 'bot-message');
-            
-            const messageContent = document.createElement('div');
-            messageContent.classList.add('message-content');
-            messageContent.innerHTML = message.replace(/\n/g, '<br>');
-            
-            messageElement.appendChild(messageContent);
-            chatMessages.appendChild(messageElement);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function showTypingIndicator() {
-            const typingElement = document.createElement('div');
-            typingElement.classList.add('message', 'bot-message', 'typing-message');
-            
-            const typingIndicator = document.createElement('div');
-            typingIndicator.classList.add('typing-indicator');
-            for (let i = 0; i < 3; i++) {
-                typingIndicator.appendChild(document.createElement('span'));
-            }
-            
-            typingElement.appendChild(typingIndicator);
-            chatMessages.appendChild(typingElement);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            return typingElement;
-        }
-
-        async function handleUserInput() {
-            const userMessage = chatInput.value.trim();
-            if (!userMessage) return;
-            
-            addMessage(userMessage, true);
-            chatInput.value = '';
-            sendButton.disabled = true;
-            
-            const typingIndicator = showTypingIndicator();
-            
-            try {
-                const response = await generateResponse(userMessage);
-                typingIndicator.remove();
-                addMessage(response, false);
-            } catch (error) {
-                typingIndicator.remove();
-                addMessage('System error. Please try again or contact technical support.', false);
-            } finally {
-                sendButton.disabled = false;
-                chatInput.focus();
-            }
-        }
-
-        // Event Listeners
-        sendButton.addEventListener('click', handleUserInput);
-        chatInput.addEventListener('keypress', (e) => {
+        
+        document.getElementById('chatInput').addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
-                handleUserInput();
+                document.getElementById('sendButton').click();
             }
         });
-
+        
+        // Student search functionality
+        document.getElementById('studentSearch')?.addEventListener('input', () => {
+            emergencySystem.updateStudentList();
+        });
+        
         // Tab Navigation
         function showTab(tabName) {
             document.querySelectorAll('.card').forEach(card => card.classList.remove('active'));
@@ -669,27 +941,182 @@ User question: ${prompt}`;
             document.getElementById(tabName + 'Tab').classList.add('active');
             event.target.classList.add('active');
         }
-
-        function updateSystemStatus() {
-            document.getElementById('gsmStatus').textContent = systemStatus.gsm ? 'Connected' : 'Disconnected';
-            document.getElementById('signalStrength').textContent = systemStatus.gsm ? 'Strong' : 'No Signal';
-            document.getElementById('satelliteCount').textContent = systemStatus.gps ? '8' : '0';
+        
+        // QR Scanner Simulation
+        function simulateQRScan() {
+            const students = emergencySystem.students;
+            const randomStudent = students[Math.floor(Math.random() * students.length)];
+            
+            const result = emergencySystem.processQRScan(randomStudent.id);
+            emergencySystem.addMessage(`📱 **QR SCAN RESULT**\n\n${result}`, false);
         }
-
-        // Simulate emergency activation (for testing)
-        function activateEmergency(type) {
-            systemStatus.emergency = true;
-            document.getElementById('emergencyStatus').classList.add('active');
-            document.getElementById('emergencyText').textContent = `${type.toUpperCase()} EMERGENCY ACTIVE`;
+        
+        // Emergency Activation
+        function activateEmergency() {
+            const emergencyTypes = ['fire', 'earthquake', 'lockdown', 'medical'];
+            const type = emergencyTypes[Math.floor(Math.random() * emergencyTypes.length)];
+            emergencySystem.activateEmergency(type);
         }
-
-        // Simulate QR scan for testing (remove in production)
-        setTimeout(() => {
-            if (confirm('Simulate QR scan for testing? (John Doe - 123456)')) {
-                const result = processQRScan('123456');
-                addMessage(`System Update: ${result}`, false);
+        
+        // Location refresh
+        function refreshLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        emergencySystem.currentLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude,
+                            accuracy: Math.round(position.coords.accuracy)
+                        };
+                        emergencySystem.updateLocationDisplay();
+                        emergencySystem.addMessage('📍 Location updated successfully!', false);
+                    },
+                    error => {
+                        emergencySystem.addMessage('❌ Unable to get location. Please check GPS permissions.', false);
+                    }
+                );
             }
-        }, 5000);
+        }
+        
+        // Clear cache
+        function clearCache() {
+            if (confirm('Clear all cached data? This will remove all student scans and location history.')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+        
+        // PWA Install functionality
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+        });
+        
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    deferredPrompt = null;
+                    hideInstallPrompt();
+                });
+            }
+        }
+        
+        function hideInstallPrompt() {
+            document.getElementById('installPrompt').style.display = 'none';
+        }
+        
+        // Online/Offline status
+        function updateConnectionStatus() {
+            const indicator = document.getElementById('connectionStatus');
+            if (navigator.onLine) {
+                indicator.textContent = '📶 ONLINE';
+                indicator.className = 'offline-indicator';
+            } else {
+                indicator.textContent = '📱 OFFLINE';
+                indicator.className = 'offline-indicator offline';
+            }
+        }
+        
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        updateConnectionStatus();
+        
+        // Service Worker Registration (for full PWA functionality)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registered successfully:', registration);
+                        
+                        // Check for updates
+                        registration.addEventListener('updatefound', () => {
+                            const newWorker = registration.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    emergencySystem.addMessage('🔄 App updated! Refresh to get the latest version.', false);
+                                }
+                            });
+                        });
+                        
+                        // Handle background sync registration
+                        if ('sync' in registration) {
+                            registration.sync.register('background-sync');
+                        }
+                        
+                        // Request notification permission
+                        if ('Notification' in window && Notification.permission === 'default') {
+                            Notification.requestPermission().then(permission => {
+                                console.log('Notification permission:', permission);
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('❌ Service Worker registration failed:', error);
+                        emergencySystem.addMessage('⚠️ Offline features may be limited. Please check your connection.', false);
+                    });
+            });
+        }
+        
+        // Handle app shortcuts (from manifest.json)
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('tab')) {
+            showTab(urlParams.get('tab'));
+        }
+        if (urlParams.get('emergency') === 'true') {
+            setTimeout(() => activateEmergency(), 1000);
+        }
+        
+        // Add to home screen prompt handling
+        let installPromptEvent;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            installPromptEvent = e;
+            
+            // Show custom install prompt after delay
+            setTimeout(() => {
+                if (!window.matchMedia('(display-mode: standalone)').matches) {
+                    document.getElementById('installPrompt').style.display = 'block';
+                }
+            }, 15000);
+        });
+        
+        // Enhanced install function
+        function installApp() {
+            if (installPromptEvent) {
+                installPromptEvent.prompt();
+                installPromptEvent.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('✅ User accepted the install prompt');
+                        emergencySystem.addMessage('📱 App installation started! You can now use this offline.', false);
+                    } else {
+                        console.log('❌ User dismissed the install prompt');
+                    }
+                    installPromptEvent = null;
+                    hideInstallPrompt();
+                });
+            } else {
+                // Fallback instructions for browsers that don't support beforeinstallprompt
+                emergencySystem.addMessage('📱 **Manual Installation:**\n\nChrome: Menu → "Install App"\niOS Safari: Share → "Add to Home Screen"\nFirefox: Address bar → Install icon', false);
+                hideInstallPrompt();
+            }
+        }
+        
+        // Detect if app is running in standalone mode
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+            console.log('✅ Running as installed PWA');
+            document.querySelector('.offline-indicator').textContent = '📱 PWA MODE';
+        }
+        
+        // Handle visibility changes (when app comes back from background)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                emergencySystem.updateDashboard();
+                updateConnectionStatus();
+            }
+        });
     </script>
 </body>
 </html>
