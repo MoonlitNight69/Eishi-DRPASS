@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Offline - Emergency System</title>
+    <meta name="theme-color" content="#dc2626">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -14,41 +21,303 @@
             justify-content: center;
             margin: 0;
             color: #333;
+            padding: 20px;
         }
+        
         .offline-container {
             background: rgba(255, 255, 255, 0.95);
             padding: 40px;
             border-radius: 20px;
             text-align: center;
-            max-width: 400px;
+            max-width: 500px;
+            width: 100%;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
         }
+        
         .offline-icon {
-            font-size: 64px;
+            font-size: 72px;
             margin-bottom: 20px;
+            animation: pulse 2s infinite;
         }
-        h1 { color: #dc2626; margin-bottom: 20px; }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        h1 {
+            color: #dc2626;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .status-info {
+            background: #f0fdf4;
+            border: 1px solid #22c55e;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .status-info h3 {
+            color: #166534;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .status-info ul {
+            color: #166534;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        
         .btn {
-            background: #3b82f6;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
             color: white;
             border: none;
             padding: 12px 24px;
-            border-radius: 8px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 16px;
+            font-weight: 600;
             margin: 10px;
             text-decoration: none;
             display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.2);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.3);
+        }
+        
+        .btn.emergency {
+            background: linear-gradient(135deg, #dc2626, #991b1b);
+            animation: emergencyPulse 1.5s infinite;
+        }
+        
+        @keyframes emergencyPulse {
+            0% { box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3); }
+            50% { box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6); }
+            100% { box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3); }
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+        
+        .connection-status.online {
+            background: rgba(34, 197, 94, 0.9);
+            animation: none;
+        }
+        
+        @media (max-width: 640px) {
+            .offline-container {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            .offline-icon {
+                font-size: 60px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .btn {
+                display: block;
+                width: 100%;
+                margin: 10px 0;
+            }
+        }
+        
+        .features-list {
+            text-align: left;
+            margin: 20px 0;
+        }
+        
+        .features-list li {
+            margin: 8px 0;
+            color: #4b5563;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
+    <div class="connection-status" id="connectionStatus">📶 OFFLINE MODE</div>
+    
     <div class="offline-container">
         <div class="offline-icon">📱</div>
-        <h1>You're Offline</h1>
-        <p>The Emergency System is designed to work offline. Return to the main application to access all emergency features.</p>
-        <a href="/" class="btn">Return to App</a>
-        <button class="btn" onclick="location.reload()">Retry Connection</button>
+        <h1>Working Offline</h1>
+        <p>The Emergency System is designed to work completely offline. All core features remain fully functional without an internet connection.</p>
+        
+        <div class="status-info">
+            <h3>✅ Available Offline Features:</h3>
+            <ul class="features-list">
+                <li>• QR Code scanning and student tracking</li>
+                <li>• Emergency alert activation</li>
+                <li>• GPS location recording</li>
+                <li>• Student directory and search</li>
+                <li>• Parent notification queuing</li>
+                <li>• Complete system functionality</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <a href="/" class="btn">🏠 Return to App</a>
+            <button class="btn emergency" onclick="openEmergency()">🚨 Emergency Mode</button>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button class="btn" onclick="location.reload()" style="background: #6b7280;">🔄 Check Connection</button>
+        </div>
+        
+        <div style="margin-top: 30px; font-size: 12px; color: #9ca3af;">
+            <p>💡 Data will sync automatically when connection returns</p>
+        </div>
     </div>
+
+    <script>
+        // Check connection status
+        function updateConnectionStatus() {
+            const indicator = document.getElementById('connectionStatus');
+            if (navigator.onLine) {
+                indicator.textContent = '📶 BACK ONLINE';
+                indicator.className = 'connection-status online';
+                
+                // Auto-redirect when back online
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 2000);
+            } else {
+                indicator.textContent = '📱 OFFLINE MODE';
+                indicator.className = 'connection-status';
+            }
+        }
+
+        // Emergency mode function
+        function openEmergency() {
+            window.location.href = '/?emergency=true';
+        }
+
+        // Listen for connection changes
+        window.addEventListener('online', updateConnectionStatus);
+        window.addEventListener('offline', updateConnectionStatus);
+        
+        // Initial status check
+        updateConnectionStatus();
+
+        // Install app prompt for better offline experience
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallSuggestion();
+        });
+
+        function showInstallSuggestion() {
+            // Only show if not already installed
+            if (!window.matchMedia('(display-mode: standalone)').matches) {
+                const suggestion = document.createElement('div');
+                suggestion.innerHTML = `
+                    <div style="background: #dbeafe; border: 1px solid #3b82f6; border-radius: 8px; padding: 15px; margin: 20px 0; text-align: center;">
+                        <p style="color: #1d4ed8; margin-bottom: 10px; font-size: 14px;">
+                            📱 For the best offline experience, install this app
+                        </p>
+                        <button onclick="installApp()" style="background: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px;">
+                            Install App
+                        </button>
+                    </div>
+                `;
+                document.querySelector('.offline-container').appendChild(suggestion);
+            }
+        }
+
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        // Service worker registration check
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then((registration) => {
+                console.log('✅ Service Worker is ready for offline use');
+            }).catch((error) => {
+                console.log('❌ Service Worker not ready:', error);
+            });
+        }
+
+        // Auto-refresh when service worker updates
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                console.log('🔄 Service Worker updated, reloading page...');
+                window.location.reload();
+            });
+        }
+
+        // Periodic connection check
+        setInterval(() => {
+            updateConnectionStatus();
+        }, 5000);
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                updateConnectionStatus();
+            }
+        });
+
+        // Cache current page for faster offline access
+        if ('caches' in window) {
+            caches.open('emergency-system-v1.0.1').then((cache) => {
+                cache.add('/offline.html').catch((err) => {
+                    console.warn('Failed to cache offline page:', err);
+                });
+            });
+        }
+
+        // Show loading state during connection attempts
+        function showConnectionLoading() {
+            const indicator = document.getElementById('connectionStatus');
+            indicator.textContent = '🔄 CONNECTING...';
+            indicator.style.background = 'rgba(245, 158, 11, 0.9)';
+        }
+
+        // Enhanced reload function with loading state
+        const originalReload = location.reload;
+        window.reload = function() {
+            showConnectionLoading();
+            setTimeout(() => {
+                originalReload.call(location);
+            }, 1000);
+        };
+
+        console.log('📱 Offline page loaded successfully');
+    </script>
 </body>
 </html>
